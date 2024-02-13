@@ -21,7 +21,4 @@ public class Book {
 
     @Column( nullable = false, name = "publication_year")
     private String publicationYear;
-
-    @Column( nullable = false)
-    private String photo;
 }

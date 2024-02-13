@@ -2,17 +2,13 @@ import axios from 'axios';
 
 let url = 'http://localhost:8080/books/'
 
-const addNewBook = async (name, author, year, photo, genreId, genreName) => {
+const addNewBook = async (name, author, year,genreId) => {
     try{
         const res = await axios.post(url, {
             name: name,
             author: author,
             publicationYear: year,
-            photo: photo,
-            fkGenre:{
-                id: genreId,
-                description: genreName
-            }
+            fkGenreId: genreId
         })
         return res.data
     }catch(error){
