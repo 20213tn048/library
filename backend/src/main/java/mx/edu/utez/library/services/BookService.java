@@ -36,14 +36,28 @@ public class BookService {
     }
 
     @SuppressWarnings("null")
+    public CustomResponse<Book> getBook(Long id){
+        try{
+            Optional<Book> findBook = bookRepository.findById(id);
+
+            if(findBook.isPresent()){
+                return new CustomResponse<>(findBook.get(),false,HttpStatus.OK.value(),"LIBRO ENCONTRADO");
+            }
+            return new CustomResponse<>(null, true, HttpStatus.NOT_FOUND.value(),"LIBRO NO ENCONTRADO");
+        }catch(Exception e){
+            return new CustomResponse<>(null, true, HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL SERVER ERROR");
+        }
+    }
+
+    @SuppressWarnings("null")
     public CustomResponse<Book> addNewBook(BookDTO bookDTO) {
         try {
             if (bookRepository.findByName(bookDTO.getName()).isPresent()) {
-                return createErrorResponse(HttpStatus.CONFLICT.value(), "LIBRO REGISTRADO ANTERIORMENTE");
+                return new CustomResponse<>(null,true,HttpStatus.CONFLICT.value(), "LIBRO REGISTRADO ANTERIORMENTE");
             }
             Optional<Genre> genre = genreRepository.findById(bookDTO.getFkGenreId());
             if (!genre.isPresent()) {
-                return createErrorResponse(HttpStatus.NOT_FOUND.value(), "GÉNERO NO ENCONTRADO");
+                return new CustomResponse<>(null, true,HttpStatus.NOT_FOUND.value(), "GÉNERO NO ENCONTRADO");
             }
 
             Book newBook = new Book();
@@ -53,18 +67,59 @@ public class BookService {
             newBook.setPublicationYear(bookDTO.getPublicationYear());
 
             Book savedBook = bookRepository.saveAndFlush(newBook);
-            return createSuccessResponse(savedBook, HttpStatus.CREATED.value(), "LIBRO GUARDADO EXITOSAMENTE");
+            return new CustomResponse<>(savedBook, false, HttpStatus.CREATED.value(), "LIBRO GUARDADO EXITOSAMENTE");
         } catch (Exception e) {
-            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL SERVER ERROR");
+            return new CustomResponse<>(null, true,HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL SERVER ERROR");
         }
     }
 
-    private CustomResponse<Book> createSuccessResponse(Book data, int status, String message) {
-        return new CustomResponse<>(data, false, status, message);
+    @SuppressWarnings("null")
+    public CustomResponse<Book> updateBook(Long id, BookDTO bookDTO) {
+        try {
+            Optional<Book> existBookOptional = bookRepository.findById(id);
+    
+            if (!existBookOptional.isPresent()) {
+                return new CustomResponse<>(null, true, HttpStatus.NOT_FOUND.value(), "LIBRO NO ENCONTRADO");
+            }
+    
+            Book existBook = existBookOptional.get();
+    
+            Optional<Genre> genreOptional = genreRepository.findById(bookDTO.getFkGenreId());
+    
+            if (!genreOptional.isPresent()) {
+                return new CustomResponse<>(null, true, HttpStatus.NOT_FOUND.value(), "GÉNERO NO ENCONTRADO");
+            }
+    
+            Genre genre = genreOptional.get();
+    
+            // Actualizando los campos del libro existente con los nuevos valores
+            existBook.setName(bookDTO.getName());
+            existBook.setAuthor(bookDTO.getAuthor());
+            existBook.setPublicationYear(bookDTO.getPublicationYear());
+            existBook.setFkGenreId(genre);
+    
+            // Guardando y devolviendo el libro actualizado
+            Book updatedBook = bookRepository.saveAndFlush(existBook);
+            return new CustomResponse<>(updatedBook, false, HttpStatus.OK.value(), "LIBRO ACTUALIZADO EXITOSAMENTE");
+    
+        } catch (Exception e) {
+            return new CustomResponse<>(null, true, HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL SERVER ERROR");
+        }
     }
+    
 
-    private CustomResponse<Book> createErrorResponse(int status, String message) {
-        return new CustomResponse<>(null, true, status, message);
+    @SuppressWarnings("null")
+    public CustomResponse<String> deleteBook(Long id){
+        try{
+            Optional<Book> findBook = bookRepository.findById(id);
+            if(findBook.isPresent()){
+                bookRepository.deleteById(id);
+                return new CustomResponse<>(null, false, HttpStatus.OK.value(), "REGISTRO ELIMINADO CORRECTAMENTE");
+            }
+            return new CustomResponse<>(null, true, HttpStatus.NOT_FOUND.value(),"LIBRO NO ENCONTRADO");
+        }catch(Exception e){
+            return new CustomResponse<>(null, true,HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL SERVER ERROR");
+        }
     }
 
 }
